@@ -6,6 +6,7 @@
 namespace App\Http\Controllers;
 
 use App\Plans;
+use App\SecArea;
 use App\UserLocus;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -72,6 +73,13 @@ class LocusController extends Controller{
 
         }
 
+        if(!($this->locusCheck($lat,$lon,$uid))){
+            $plan = Plans::where('uid','=',$uid)->first();
+            if($plan == ''){
+                $this->planSet($uid,$lon,$lat);
+            }
+        }
+
         if($set){
             echo json_encode(array(
                 'status'=>200,
@@ -89,7 +97,7 @@ class LocusController extends Controller{
 
 
     /*
-     * 获取用户实时坐标
+     * 查询用户实时坐标
      * */
     public function LocusGet(Request $request){
         $uid = $request->input('uid');
@@ -136,7 +144,28 @@ class LocusController extends Controller{
         $plan->uid = $uid;
         $plan->start_longitude = $lon;
         $plan->start_latitude = $lat;
+        $plan->expire = 120;
+//        $plan->end_longitude = $d_lon;
+//        $plan->end_latitude = $d_lat;
         $plan->has_alert = 0;
+
+        return $plan->save();
+    }
+
+
+    /*
+     * 判断安全区距离
+     * */
+    public function locusCheck($lat,$lon,$uid){
+        $sec_areas = SecArea::where('uid','=',$uid)->get()->toArray();
+        foreach($sec_areas as $area){
+            $distance = $this->getDistance($lat,$lon,$area['lat'],$area['lon']);
+            if($distance < 150){
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
