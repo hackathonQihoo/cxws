@@ -288,7 +288,7 @@ class Factory implements FactoryContract
      */
     public function getEngineFromPath($path)
     {
-        if (!$extension = $this->getExtension($path)) {
+        if (! $extension = $this->getExtension($path)) {
             throw new InvalidArgumentException("Unrecognized extension in file: $path");
         }
 
@@ -321,7 +321,7 @@ class Factory implements FactoryContract
      */
     public function share($key, $value = null)
     {
-        if (!is_array($key)) {
+        if (! is_array($key)) {
             return $this->shared[$key] = $value;
         }
 
@@ -391,7 +391,7 @@ class Factory implements FactoryContract
      * @param  \Closure|string  $callback
      * @param  string  $prefix
      * @param  int|null  $priority
-     * @return \Closure
+     * @return \Closure|null
      */
     protected function addViewEvent($view, $callback, $prefix = 'composing: ', $priority = null)
     {

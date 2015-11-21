@@ -19,3 +19,5 @@ Route::get('/', function () {
 Route::get('caiyun','CaiyunController@CaiyunGet');
 
 Route::get('caiyun_now','CaiyunController@CaiyunGetNow');
+
+Route::get('locus_set','LocusController@LocusSet');

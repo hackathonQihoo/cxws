@@ -45,6 +45,11 @@ class Local extends AbstractAdapter
     protected $pathSeparator = DIRECTORY_SEPARATOR;
 
     /**
+     * @var array
+     */
+    protected $permissionMap;
+
+    /**
      * @var int
      */
     protected $writeFlags;
@@ -57,14 +62,17 @@ class Local extends AbstractAdapter
      * Constructor.
      *
      * @param string $root
-     * @param int $writeFlags
-     * @param int $linkHandling
+     * @param int    $writeFlags
+     * @param int    $linkHandling
+     * @param array  $permissions
      */
-    public function __construct($root, $writeFlags = LOCK_EX, $linkHandling = self::DISALLOW_LINKS)
+    public function __construct($root, $writeFlags = LOCK_EX, $linkHandling = self::DISALLOW_LINKS, array $permissions = [])
     {
+        // permissionMap needs to be set before ensureDirectory() is called.
+        $this->permissionMap = array_replace_recursive(static::$permissions, $permissions);
         $realRoot = $this->ensureDirectory($root);
 
-        if (! is_dir($realRoot) || ! is_readable($realRoot)) {
+        if (! is_dir($realRoot) || !is_readable($realRoot)) {
             throw new \LogicException('The root path '.$root.' is not readable.');
         }
 
@@ -84,7 +92,7 @@ class Local extends AbstractAdapter
     {
         if (! is_dir($root)) {
             $umask = umask(0);
-            mkdir($root, static::$permissions['dir']['public'], true);
+            mkdir($root, $this->permissionMap['dir']['public'], true);
             umask($umask);
         }
 
@@ -320,7 +328,7 @@ class Local extends AbstractAdapter
     {
         $location = $this->applyPathPrefix($path);
         $type = is_dir($location) ? 'dir' : 'file';
-        chmod($location, static::$permissions[$type][$visibility]);
+        chmod($location, $this->permissionMap[$type][$visibility]);
 
         return compact('visibility');
     }
@@ -334,7 +342,7 @@ class Local extends AbstractAdapter
         $umask = umask(0);
         $visibility = $config->get('visibility', 'public');
 
-        if (! is_dir($location) && ! mkdir($location, static::$permissions['dir'][$visibility], true)) {
+        if (! is_dir($location) && !mkdir($location, $this->permissionMap['dir'][$visibility], true)) {
             $return = false;
         } else {
             $return = ['path' => $dirname, 'type' => 'dir'];
@@ -363,10 +371,15 @@ class Local extends AbstractAdapter
 
         /** @var SplFileInfo $file */
         foreach ($contents as $file) {
-            if ($file->getType() !== 'dir') {
-                unlink($file->getRealPath());
-            } else {
-                rmdir($file->getRealPath());
+            switch ($file->getType()) {
+                case 'dir':
+                    rmdir($file->getRealPath());
+                    break;
+                case 'link':
+                    unlink($file->getPathname());
+                    break;
+                default:
+                    unlink($file->getRealPath());
             }
         }
 
@@ -400,10 +413,10 @@ class Local extends AbstractAdapter
      */
     protected function getFilePath(SplFileInfo $file)
     {
-        $path = $file->getPathname();
-        $path = $this->removePathPrefix($path);
+        $location = $file->getPathname();
+        $path = $this->removePathPrefix($location);
 
-        return trim($path, '\\/');
+        return trim(str_replace('\\', '/', $path), '/');
     }
 
     /**
@@ -433,6 +446,7 @@ class Local extends AbstractAdapter
 
     /**
      * @param SplFileInfo $file
+     *
      * @return array
      */
     protected function mapFileInfo(SplFileInfo $file)
@@ -449,5 +463,15 @@ class Local extends AbstractAdapter
         }
 
         return $normalized;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function applyPathPrefix($path)
+    {
+        $prefixedPath = parent::applyPathPrefix($path);
+
+        return str_replace('/', DIRECTORY_SEPARATOR, $prefixedPath);
     }
 }

@@ -55,7 +55,7 @@ return [
         'mysql' => [
             'driver'    => 'mysql',
             'host'      => '127.0.0.1',
-            'database'  => 'air',
+            'database'  => 'cxws',
             'username'  => 'tianling',
             'password'  => '887976',
             'charset'   => 'utf8',
@@ -63,18 +63,18 @@ return [
             'prefix'    => '',
             'strict'    => false,
         ],
-
-        'mysql' => [
-            'driver'    => 'mysql',
-            'host'      => '127.0.0.1',
-            'database'  => 'air',
-            'username'  => 'root',
-            'password'  => '887976',
-            'charset'   => 'utf8',
-            'collation' => 'utf8_unicode_ci',
-            'prefix'    => '',
-            'strict'    => false,
-        ],
+//
+//        'mysql' => [
+//            'driver'    => 'mysql',
+//            'host'      => '127.0.0.1',
+//            'database'  => 'air',
+//            'username'  => 'root',
+//            'password'  => '887976',
+//            'charset'   => 'utf8',
+//            'collation' => 'utf8_unicode_ci',
+//            'prefix'    => '',
+//            'strict'    => false,
+//        ],
 
         'pgsql' => [
             'driver'   => 'pgsql',
